@@ -1,0 +1,337 @@
+<html>
+    <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+        <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+        <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+        <script src="/welcome/static/js/bobby.js"></script>
+        <script src="/welcome/static/js/bobby2.js"></script>
+        <link href="/welcome/static/css/main.css" rel="stylesheet">
+   <script>
+         let history=[]
+
+    function doEverything(pieceType, pieceColor, pieceNumber, srcRow, srcCol, destRow, destCol) {
+        if(srcRow==destRow && srcCol==destCol)
+            return false;
+
+        let legal=false;
+
+        let dir=pieceColor=="black"?1:-1;
+        let firstRow= pieceColor=="black"?2:7;
+        let oppColor=pieceColor=="black"?"white":"black";
+        console.log(" checking "+pieceColor+" from "+srcRow+","+srcCol+
+        " to "+destRow+","+destCol +" dir= "+dir)
+        let destSquare= $(".chess-square[row="+destRow+"][column="+destCol+"]");
+        let samePiece=destSquare.find("img[color=" + pieceColor + "]");
+        if(samePiece.length>0)
+            return false;
+        let oppPiece=destSquare.find("img[color=" + oppColor + "]")
+
+        let hDir=Math.sign(destCol-srcCol), vDir=Math.sign(destRow-srcRow)
+
+        let dRow = Math.abs(destRow-srcRow), dCol= Math.abs(destCol-srcCol)
+
+        if(pieceType=="pawn") {
+        let distance=(srcRow==firstRow)?2:1;
+            if (destRow==srcRow+dir && Math.abs(srcCol-destCol)==1 && oppPiece.length>0) {
+                oppPiece.detach().appendTo(".sidebar")
+                return true;
+            }
+            return (srcCol==destCol && (destRow==srcRow+dir || destRow==srcRow+distance*dir) && oppPiece.length==0)
+
+        }
+        else if(pieceType=="knight") {
+            legal=(dCol==2 && dRow==1) || (dCol==1 && dRow==2);
+        }
+        else if(pieceType=="bishop") {
+            legal=dCol==Math.abs(destRow-srcRow);
+
+        }
+        else if(pieceType=="rook") {
+            legal=(destRow==srcRow) || (destCol==srcCol);
+        }
+
+        else if(pieceType=="queen") {
+            legal=dCol==Math.abs(destRow-srcRow) || (destRow==srcRow) || (destCol==srcCol);
+        }
+        else if(pieceType=="king") {
+            let castling= (dCol==2 && dRow==0 && numMoves(pieceType, pieceColor, pieceNumber)==0)
+            if (castling) {
+                let rookNumber= destCol==3?1:2;
+                let rook= getPiece("rook",pieceColor, rookNumber)
+                let firstRow=pieceColor=="black"?1:8
+                let clear=destCol==7 || (destCol==3 && !isOccupied(firstRow,2))
+                if (numMoves("rook", pieceColor, rookNumber)==0 && clear) {
+                    legal=true
+                }
+            }
+            else legal=(Math.abs(destRow-srcRow)<=1 && Math.abs(destCol-srcCol)<=1)
+        }
+        if (pieceType=="bishop" || pieceType=="rook" || pieceType=="queen" || pieceType=="king") {
+            for(let c=srcCol+hDir, r=srcRow+vDir; c!=destCol || r!=destRow; c+=hDir, r+=vDir){
+                    if(isOccupied(r, c))
+                        return false
+                }
+        }
+        if(legal && oppPiece.length>0) {
+            oppPiece.detach().appendTo(".sidebar")
+        }
+        if (legal) {
+            let item= {
+              type: pieceType,
+              color: pieceColor,
+              number: pieceNumber,
+              row: destRow,
+              column: destCol,
+            };
+            history.push(item)
+        }
+        let thisPiece=getPiece (pieceType, pieceColor, pieceNumber)
+
+        return legal;
+    }
+
+    function numMoves (pieceType, pieceColor, pieceNumber) {
+        let num=0;
+        for (let item of history) {
+            if (item.type==pieceType && item.color==pieceColor && item.number==pieceNumber)
+                num++;
+        }
+        return num
+    }
+
+    function getPiece (pieceType, pieceColor, pieceNumber) {
+        return $("img[color="+pieceColor+"][type="+pieceType+"][number="+pieceNumber+"]")
+    }
+
+
+    function isOccupied (row, col, color) {
+        let square= $(".chess-square[row="+row+"][column="+col+"]");
+        let selector= color? "[color="+color+"]" : "";
+        let piece=square.find("img"+selector);
+        return piece.length>0
+    }
+
+    $(document).ready(function() {
+        $("#chessboard td").addClass("droppable chess-square");
+        $("#chessboard img").addClass("chesspieces")
+
+        console.log("starting this thing");
+        for(let i=0; i<8; i++) {
+            console.log(i)
+            let row = $("#chessboard tr:nth-child("+(i+1)+")");
+            row.attr("row",i+1);
+            console.log("adding row attr to" +row.length+" elements");
+            for(let c=0; c<8; c++) {
+                let square = row.children("td:nth-child("+(c+1)+")");
+                    square.attr("row",i+1);
+                    square.attr("column",c+1);
+            }
+
+        }
+
+        $(".draggable").draggable();
+        $( ".droppable" ).droppable({
+            drop: function(event, ui) {
+            let src=ui.draggable.parent()
+            let filename=ui.draggable.attr("src");
+
+            let srcRow=parseInt(src.attr("row")), srcCol=parseInt(src.attr("column"));
+            let dest=$(this)
+            let type= ui.draggable.attr("type"), color= ui.draggable.attr("color"), number=ui.draggable.attr("number")
+            let destRow=parseInt(dest.attr("row")), destCol=parseInt(dest.attr("column"));
+            let legal=doEverything(type, color, number, srcRow, srcCol, destRow, destCol)
+                     if (legal) {
+             ui.draggable.detach().appendTo(this).css({top:0, left:0});
+                console.log(" legalmove ");
+            }
+        else {
+            console.log(" illegalmove");
+            ui.draggable.css({top:0, left:0});
+            }
+                $(".chess-square").removeClass("occupied")
+                $( this )
+                  .addClass( "occupied" )
+          }
+        });
+    });
+  </script>
+
+
+
+  <style>
+            #greece {
+        border:2px solid green;
+      }
+      h1{
+          color:white;
+          font-size:30px;
+      }
+      .car {
+          padding-left:20px;
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
+      }
+      a {
+          font-size:20px;
+      }
+      table {
+          display:inline-block;
+      }
+      .pawn {
+
+          padding-right:50px;
+      }
+      .top {
+          vertical-align:top;
+      }
+      td {
+          border:1px solid black;
+          width:80px;
+          height:80px;
+      }
+      img.chesspieces {
+          max-width:80px;
+          max-height:80px;
+      }
+      #uno {
+          font:bold 30px times;
+          color:black;
+          background-color:yellow;
+          padding:0px 10px;
+      }
+
+    #abutton {
+        height: fit-content;
+    }
+
+    body {
+      background: url(http://fischerrandom.pythonanywhere.com/welcome/static/images/imageedit_1_8892303706.png) no-repeat center center fixed;
+      -webkit-background-size: cover;
+      -moz-background-size: cover;
+      -o-background-size: cover;
+      background-size: cover;
+    }
+
+    .list-group {
+
+    }
+
+    .tab-pane.active{
+        display: flex !important;
+        justify-content: center;
+    }
+
+    .occupied{
+        background-color:yellow;
+    }
+
+    .sidebar{
+        border: 3px solid black;
+        margin-left: 50px;
+        width: 100px;
+        max-height:640px;
+        overflow:scroll;
+    }
+ </style>
+    </head>
+    <body>
+    
+          <div>  <table class="top" id="chessboard">
+            <tr>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/blackrook.png" type="rook" color="black" number="1"></td>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/blackknight.png" type="knight" color="black" number="1"></td>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/blackbishop.png" type="bishop" color="black" number="1"></td>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/blackqueen.png" type="queen" color="black" number="1"></td>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/blackking.png" type="king" color="black" number="1"></td>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/blackbishop.png" type="bishop" color="black" number="2"></td>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/blackknight.png" type="knight" color="black" number="2"></td>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/blackrook.png" type="rook" color="black" number="2"></td>
+            </tr>
+            <tr>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/blackpawn.png" type="pawn" color="black" number="1"></td>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/blackpawn.png" type="pawn" color="black" number="2"></td>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/blackpawn.png" type="pawn" color="black" number="3"></td>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/blackpawn.png" type="pawn" color="black" number="4"></td>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/blackpawn.png" type="pawn" color="black" number="5"></td>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/blackpawn.png" type="pawn" color="black" number="6"></td>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/blackpawn.png" type="pawn" color="black" number="7"></td>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/blackpawn.png" type="pawn" color="black" number="8"></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/whitepawn.png" type="pawn" color="white" number="1"></td>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/whitepawn.png" type="pawn" color="white" number="2"></td>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/whitepawn.png" type="pawn" color="white" number="3"></td>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/whitepawn.png" type="pawn" color="white" number="4"></td>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/whitepawn.png" type="pawn" color="white" number="5"></td>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/whitepawn.png" type="pawn" color="white" number="6"></td>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/whitepawn.png" type="pawn" color="white" number="7"></td>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/whitepawn.png" type="pawn" color="white" number="8"></td>
+            </tr>
+            <tr>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/whiterook.png" type="rook" color="white" number="1"></td>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/whiteknight.png" type="knight" color="white" number="1"></td>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/whitebishop.png" type="bishop" color="white" number="1"></td>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/whitequeen.png" type="queen" color="white" number="1"></td>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/whiteking.png" type="king" color="white" number="1"></td>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/whitebishop.png" type="bishop" color="white" number="2"></td>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/whiteknight.png" type="knight" color="white" number="2"></td>
+                <td><img class="draggable" src="http://fischerrandom.pythonanywhere.com/welcome/static/images/chesspieces/whiterook.png" type="rook" color="white" number="2"></td>
+            </tr>
+
+        </table>
+        <div class="sidebar">
+
+        </div>
+
+        </div>
+
+
+
+
+
+    </body>
+
+</html>

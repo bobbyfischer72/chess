@@ -1,0 +1,129 @@
+        #greece {
+        border:2px solid green;
+      }
+      h1{
+          color:white;
+          font-size:30px;
+          text-align:center;
+      }
+
+        .nav-tabs, .nav-pills {
+            justify-content:center;
+            font-weight:bold;
+        }
+
+        .nav-link {
+            color: white;
+        }
+
+        #gamelog td.lonelycell {
+            border:none;
+            width:45px;
+        }
+
+        #gamelog td.lognumber {
+            color:white;
+            background-color:black;
+            width:45px;
+        }
+
+        .nav-link.active {
+            background-color:black;
+        }
+
+      .car {
+          padding-left:20px;
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
+      }
+
+      a {
+          font-size:20px;
+      }
+      table {
+          display:inline-block;
+      }
+      .pawn {
+
+          padding-right:50px;
+      }
+      .top {
+          vertical-align:top;
+      }
+
+
+      #chessboard td {
+          border:1px solid black;
+          width:80px;
+          height:80px;
+      }
+      img.chesspieces {
+          max-width:80px;
+          max-height:80px;
+      }
+      #uno {
+          font:bold 30px times;
+          color:black;
+          background-color:yellow;
+          padding:0px 10px;
+      }
+
+    #abutton {
+        height: fit-content;
+    }
+
+    body {
+      background: url(/welcome/static/images/imageedit_1_8892303706.png) no-repeat center center fixed;
+      -webkit-background-size: cover;
+      -moz-background-size: cover;
+      -o-background-size: cover;
+      background-size: cover;
+    }
+
+    .list-group {
+
+    }
+
+    .tab-pane.active{
+        display: flex !important;
+        justify-content: space-evenly;
+    }
+
+    .center-it{
+        text-align: center;
+    }
+
+    #gamelog{
+         overflow:scroll;
+         max-height:640px;
+    }
+
+    #gamelog td{
+        border:1px solid black;
+        width:100px;
+        height:50px;
+    }
+
+    .bback{
+        color: white;
+        background-color: black;
+    }
+
+    .wback{
+        color: black;
+        background-color:white;
+    }
+
+    .occupied{
+        background-color:yellow;
+    }
+
+    .sidebar{
+        border: 3px solid black;
+        margin-left: 50px;
+        width: 100px;
+        max-height:640px;
+        overflow:scroll;
+    }
+
